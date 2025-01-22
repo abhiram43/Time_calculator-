@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Shift Time Analyzer</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #f4f6f7;
+            --text-color: #2c3e50;
+            --card-background: white;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .header i {
+            font-size: 2rem;
+        }
+
+        .input-section {
+            background-color: var(--card-background);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid var(--primary-color);
+            border-radius: 8px;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            margin-top: 15px;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #27ae60;
+        }
+
+        #results {
+            margin-top: 20px;
+        }
+
+        .result-section {
+            background-color: var(--card-background);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .result-section h3 {
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table th {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        table td {
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <i class="fas fa-clock"></i>
+                Shift Time Analyzer
+                <i class="fas fa-chart-line"></i>
+            </h1>
+        </div>
+
+        <div class="input-section">
+            <p>Paste your time entries (format: 2:53:39 PM):</p>
+            <textarea id="timeEntries" placeholder="Example:
+3:00:00 PM
+4:30:15 PM
+5:00:45 PM
+6:15:20 PM"></textarea>
+            <button class="btn" onclick="calculateTimeAnalysis()">
+                <i class="fas fa-calculator"></i> Analyze Shift
+            </button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // [Previous JavaScript code remains the same as in the last submission]
+        // Copy the entire script from the previous artifact
+        function parseTime(timeStr, baseDate = null) {
+            // Same implementation as before
+            const [time, period] = timeStr.trim().split(' ');
+            let [hours, minutes, seconds] = time.split(':').map(Number);
+            
+            if (period === 'PM' && hours !== 12) {
+                hours += 12;
+            } else if (period === 'AM' && hours === 12) {
+                hours = 0;
+            }
+            
+            if (baseDate) {
+                const newDate = new Date(baseDate);
+                if (baseDate.getHours() > 12 && hours < 12) {
+                    newDate.setDate(newDate.getDate() + 1);
+                }
+                newDate.setHours(hours, minutes, seconds);
+                return newDate;
+            }
+            
+            return new Date(2024, 0, 1, hours, minutes, seconds);
+        }
+
+        function formatDuration(milliseconds) {
+            const totalSeconds = Math.floor(milliseconds / 1000);
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
+            
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function calculateTimeAnalysis() {
+            // Same implementation as before
+            const entriesText = document.getElementById('timeEntries').value;
+            const entries = entriesText.split('\n').filter(entry => entry.trim() !== '');
+            
+            if (entries.length < 2 || entries.length % 2 !== 0) {
+                alert('Please provide an even number of time entries (in-time and out-time pairs)');
+                return;
+            }
+
+            const parsedEntries = [];
+            for (let i = 0; i < entries.length; i++) {
+                if (i === 0) {
+                    parsedEntries.push(parseTime(entries[i]));
+                } else {
+                    parsedEntries.push(parseTime(entries[i], parsedEntries[i-1]));
+                }
+            }
+
+            let totalWorkTime = 0;
+            let totalBreakTime = 0;
+            const workSessions = [];
+            const breaks = [];
+
+            for (let i = 0; i < parsedEntries.length; i += 2) {
+                const inTime = parsedEntries[i];
+                const outTime = parsedEntries[i + 1];
+                
+                const workSessionTime = outTime - inTime;
+                totalWorkTime += workSessionTime;
+                
+                workSessions.push({
+                    inTime: entries[i],
+                    outTime: entries[i + 1],
+                    duration: formatDuration(workSessionTime)
+                });
+
+                if (i + 2 < parsedEntries.length) {
+                    const nextInTime = parsedEntries[i + 2];
+                    const breakTime = nextInTime - outTime;
+                    
+                    totalBreakTime += breakTime;
+                    breaks.push({
+                        startTime: entries[i + 1],
+                        endTime: entries[i + 2],
+                        duration: formatDuration(breakTime)
+                    });
+                }
+            }
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <div class="result-section">
+                    <h3><i class="fas fa-chart-pie"></i> Time Analysis</h3>
+                    <p><strong>Total Work Time:</strong> ${formatDuration(totalWorkTime)}</p>
+                    <p><strong>Total Break Time:</strong> ${formatDuration(totalBreakTime)}</p>
+                </div>
+                
+                <div class="result-section">
+                    <h3><i class="fas fa-briefcase"></i> Work Sessions</h3>
+                    <table>
+                        <tr>
+                            <th>In Time</th>
+                            <th>Out Time</th>
+                            <th>Duration</th>
+                        </tr>
+                        ${workSessions.map(session => `
+                            <tr>
+                                <td>${session.inTime}</td>
+                                <td>${session.outTime}</td>
+                                <td>${session.duration}</td>
+                            </tr>
+                        `).join('')}
+                    </table>
+                </div>
+                
+                <div class="result-section">
+                    <h3><i class="fas fa-pause-circle"></i> Breaks Between Sessions</h3>
+                    <table>
+                        <tr>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Duration</th>
+                        </tr>
+                        ${breaks.length > 0 ? 
+                            breaks.map((brk, index) => `
+                                <tr>
+                                    <td>${brk.startTime}</td>
+                                    <td>${brk.endTime}</td>
+                                    <td>${brk.duration}</td>
+                                </tr>
+                            `).join('') : 
+                            '<tr><td colspan="3">No breaks detected.</td></tr>'
+                        }
+                    </table>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
